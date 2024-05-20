@@ -17,10 +17,10 @@ router.put("/updateByIdAndFoodType", dataController.updateByIdAndFoodType); //Up
 
 router.put("/addBloodGlucose", dataController.addBloodGlucose); // Add BloodGlucose to Meals
 
-router.put("/bloodGlucoseBefore",dataController.bloodGlucoseBefore);
+router.put("/bloodGlucoseBefore", dataController.bloodGlucoseBefore);
 
 
-router.post("/addBloodGlucoseBeforeMeal",dataController.addBloodGlucoseBeforeMeal);
+router.post("/addBloodGlucoseBeforeMeal", dataController.addBloodGlucoseBeforeMeal);
 
 router.get("/homeScreenCarbDetails", dataController.getCarbDetailsHomeScreen); // Get Carbs Details for home screen
 
