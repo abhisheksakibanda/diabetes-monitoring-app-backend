@@ -319,10 +319,32 @@ const addBloodGlucoseBeforeMeal = async (req, res) => {
         .json({ message: "No user meal found for the given criteria." });
     }
   } catch (error) {
-    console.error("Error updating user meal:", error);
+    console.error("Error updating user meal: ", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+const getBloodGlucoseBeforeMeal = async (req, res) => {
+  try {
+    const { userId, mealType } = req.query;
+    const currentDate = new Date().toLocaleDateString("en-GB");
+
+    const userBloodGlucose = await userBloodGlucoseSchema.findOne({
+      userId,
+      mealType,
+      mealDate: { $eq: currentDate }
+    });
+
+    if (userBloodGlucose) {
+      res.status(200).json(userBloodGlucose);
+    } else {
+      res.status(404).json({ message: "No blood glucose data found for the given criteria." });
+    }
+  } catch (error) {
+    console.error("Error fetching blood glucose data:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
 
 const getCarbDetailsHomeScreen = async (req, res) => {
   try {
@@ -354,4 +376,5 @@ module.exports = {
   addBloodGlucose,
   bloodGlucoseBefore,
   addBloodGlucoseBeforeMeal,
+  getBloodGlucoseBeforeMeal,
 };
