@@ -2,8 +2,6 @@ const userMealSchema = require("../models/userFoodData");
 const userMealDateSchema = require("../models/userMealDates");
 const userBloodGlucoseSchema = require("../models/userBloodGlucose");
 
-
-
 const storeUserData = (req, res) => {
   const {
     userId,
@@ -28,30 +26,28 @@ const storeUserData = (req, res) => {
     hour12: false,
   });
 
-  console.log("Current Time:", formattedTime);
+  console.log("Current Time: ", formattedTime);
 
-  userMealDateSchema
-    .findOne({
+  userMealDateSchema.findOne({
+    userId,
+    mealDate: mealDate,
+  }).then(existingDate => {
+    if (existingDate) {
+      // If mealDate already exists, do not save a new entry
+      console.log("MealDate already exists");
+      return;
+    }
+    console.log("New Date ");
+    const newUserMealDateSchema = new userMealDateSchema({
       userId,
-      mealDate: mealDate,
-    })
-    .then((existingDate) => {
-      if (existingDate) {
-        // If mealDate already exists, do not save a new entry
-        console.log("MealDate already exists");
-        return;
-      }
-      console.log("New Date ");
-      const newUserMealDateSchema = new userMealDateSchema({
-        userId,
-        mealDate,
-      });
-
-      newUserMealDateSchema.save().then((dateSchema) => {
-        // Handle successful save
-        console.log("New userMealDateSchema saved ");
-      });
+      mealDate,
     });
+
+    newUserMealDateSchema.save().then(dateSchema => {
+      // Handle successful save
+      console.log("New userMealDateSchema saved: ", dateSchema);
+    });
+  });
 
   const newUserMealSchema = new userMealSchema({
     userId,
@@ -65,7 +61,7 @@ const storeUserData = (req, res) => {
     userCRR,
   });
 
-  newUserMealSchema.save().then((mealSchema) => {
+  newUserMealSchema.save().then(mealSchema => {
     // Handle successful save
     console.log("New userMealSchema saved");
     res.status(200).send("New userMealSchema saved");
@@ -125,7 +121,7 @@ function calculateNewICR(data) {
 
   // Calculate the new ICR rounded to one decimal place
   const initialICR = 10; // Replace with the user's initial ICR
-  console.log("da corr :", data[0].userICR, averageCorrectionFactor);
+  console.log("da corr: ", data[0].userICR, averageCorrectionFactor);
   const newICR = Number(
     (Number(data[0].userICR) * (1 + averageCorrectionFactor)).toFixed(1)
   );
@@ -150,10 +146,10 @@ const updateUserIcr = async (req, res) => {
     const userBFData = await userMealSchema.find(query, null, options);
     console.log(userBFData);
     const newICR = calculateNewICR(userBFData);
-    console.log("New ICr :", newICR);
+    console.log("New ICr: ", newICR);
     res.status(200).json(newICR);
   } catch (error) {
-    console.log("Error :", error);
+    console.log("Error: ", error);
   }
 };
 
@@ -161,7 +157,7 @@ const getDataByFoodType_Uid_Date = async (req, res) => {
   try {
     const { userId, mealType } = req.query;
     const currentDate = new Date().toLocaleDateString("en-GB");
-    console.log("Find Date :", currentDate);
+    console.log("Find Date: ", currentDate);
     const userMeal = await userMealSchema.findOne({
       userId,
       mealType,
@@ -174,7 +170,7 @@ const getDataByFoodType_Uid_Date = async (req, res) => {
       res.status(404).json(null);
     }
   } catch (error) {
-    console.error("Error fetching user meal:", error);
+    console.error("Error fetching user meal: ", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -182,13 +178,14 @@ const getDataByFoodType_Uid_Date = async (req, res) => {
 const getUserAllDates = async (req, res) => {
   try {
     const { userId } = req.query;
-    console.log("user :", userId);
+    console.log("user: ", userId);
     const userDates = await userMealDateSchema
       .find({
         userId,
       })
       .sort({ mealDate: -1 })
       .limit(7);
+
     if (userDates.length > 0) {
       res.status(200).json(userDates);
     } else {
@@ -223,7 +220,7 @@ const updateByIdAndFoodType = async (req, res) => {
     const { userId, mealType, mealItems, totalCarbs } = req.body;
 
     const currentDate = new Date().toLocaleDateString("en-GB");
-    console.log("Find Date to Update :", currentDate);
+    console.log("Find Date to Update: ", currentDate);
 
     const updatedUserMeal = await userMealSchema.findOneAndUpdate(
       { userId, mealType, mealDate: { $eq: currentDate } },
@@ -242,7 +239,7 @@ const updateByIdAndFoodType = async (req, res) => {
         .json({ message: "No user meal found for the given criteria." });
     }
   } catch (error) {
-    console.error("Error updating user meal:", error);
+    console.error("Error updating user meal: ", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };

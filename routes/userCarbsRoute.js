@@ -6,14 +6,14 @@ router.post("/submitData", dataController.storeUserData); // Use to Submit Data
 
 router.get(
   "/getDataByMealType/Date",
-  dataController.getDataByFoodType_Uid_Date //This is used when user Clicks on BF which has already been submitted(Current Date)
+  dataController.getDataByFoodType_Uid_Date // User clicks on BF which has already been submitted (Current Date)
 );
 
-router.get("/getDataByDate", dataController.getUserDataByDate); //Will be Used in History Need to Give Specific Date(DD/MM/YYY) to Get Data
+router.get("/getDataByDate", dataController.getUserDataByDate); // Used in History Need to Give Specific Date(DD/MM/YYY) to Get Data
 
 router.get("/userDates", dataController.getUserAllDates);
 
-router.put("/updateByIdAndFoodType", dataController.updateByIdAndFoodType); //Update Current Day Meal
+router.put("/updateByIdAndFoodType", dataController.updateByIdAndFoodType); // Update Current Day Meal
 
 router.put("/addBloodGlucose", dataController.addBloodGlucose); // Add BloodGlucose to Meals
 
