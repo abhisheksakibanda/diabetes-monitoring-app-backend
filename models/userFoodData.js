@@ -34,7 +34,7 @@ const userMealSchema = new mongoose.Schema({
   },
   mealDate: {
     type: String,
-    default: Date.now(),
+    default: new Date().toLocaleDateString("en-GB"),
   },
   insulinDose: {
     type: Number,
@@ -51,4 +51,6 @@ const userMealSchema = new mongoose.Schema({
   }
 });
 
-module.exports = userMeal = mongoose.model("userMealSchema", userMealSchema);
+userMeal = mongoose.model("userMeal", userMealSchema);
+
+module.exports = userMeal;

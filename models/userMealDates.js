@@ -7,11 +7,10 @@ const userMealDateSchema = new mongoose.Schema({
   },
   mealDate: {
     type: String,
-    default: Date.now(),
+    default: new Date().toLocaleDateString("en-GB"),
   },
 });
 
-module.exports = userMealDate = mongoose.model(
-  "userMealDateSchema",
-  userMealDateSchema
-);
+userMealDate = mongoose.model("userMealDate", userMealDateSchema);
+
+module.exports = userMealDate;

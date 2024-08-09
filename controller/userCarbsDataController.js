@@ -14,10 +14,7 @@ const storeUserData = (req, res) => {
     userCRR,
   } = req.body;
   const currentDate = new Date();
-  const day = String(currentDate.getDate()).padStart(2, "0");
-  const month = String(currentDate.getMonth() + 1).padStart(2, "0");
-  const year = currentDate.getFullYear();
-  const mealDate = `${day}/${month}/${year}`;
+  const mealDate = currentDate.toLocaleDateString("en-GB");
 
   const formattedTime = currentDate.toLocaleTimeString("en-US", {
     hour: "2-digit",
@@ -37,7 +34,7 @@ const storeUserData = (req, res) => {
       console.log("MealDate already exists");
       return;
     }
-    console.log("New Date ");
+    console.log("New Date: ");
     const newUserMealDateSchema = new userMealDateSchema({
       userId,
       mealDate,
@@ -75,7 +72,7 @@ const storeUserData = (req, res) => {
   //   bloodGlucoseBeforeMeal,
   // });
 
-  // newUserBloodGlucoseSchema.save().then((userBloodSchema) => {
+  // newUserBloodGlucoseSchema.save().then(userBloodSchema => {
 
   // });
 
@@ -86,7 +83,7 @@ const storeUserData = (req, res) => {
   //       mealType: mealType,
   //       bloodGlucoseBeforeMeal : bloodGlucoseBeforeMeal,
   //     })
-  //     .then((existingDate) => {
+  //     .then(existingDate => {
   //       if (existingDate) {
   //         // If mealDate already exists, do not save a new entry
   //         console.log("MealDate already exists");
@@ -100,16 +97,17 @@ const storeUserData = (req, res) => {
   //         bloodGlucoseBeforeMeal,
   //       });
 
-  //       newUserBloodGlucoseSchema.save().then((userBloodSchema) => {
+  //       newUserBloodGlucoseSchema.save().then(userBloodSchema => {
   //         // Handle successful save
   //         console.log("New user blood glucose saved ");
   //       });
   //     });
 };
+
 // Calculate new ICR based on historical data
 function calculateNewICR(data) {
-  const targetBloodGlucose = 100;
-  const correctionFactor = 50;
+  const targetBloodGlucose = data[0].userICR;
+  const correctionFactor = data[0].userCRR;
 
   // Calculate the average correction factor
   const sumCorrectionFactor = data.reduce((sum, entry) => {
@@ -122,11 +120,9 @@ function calculateNewICR(data) {
   // Calculate the new ICR rounded to one decimal place
   const initialICR = 10; // Replace with the user's initial ICR
   console.log("da corr: ", data[0].userICR, averageCorrectionFactor);
-  const newICR = Number(
-    (Number(data[0].userICR) * (1 + averageCorrectionFactor)).toFixed(1)
+  return Number(
+      (Number(data[0].userICR) * (1 + averageCorrectionFactor)).toFixed(1)
   );
-
-  return newICR;
 }
 
 const updateUserIcr = async (req, res) => {
@@ -179,12 +175,25 @@ const getUserAllDates = async (req, res) => {
   try {
     const { userId } = req.query;
     console.log("user: ", userId);
-    const userDates = await userMealDateSchema
-      .find({
-        userId,
-      })
-      .sort({ mealDate: -1 })
-      .limit(7);
+
+    const userDates = await userMealDateSchema.aggregate([
+      {
+        $match: { userId }
+      },
+      {
+        $addFields: {
+          mealDateObj: {
+            $dateFromString: {
+              dateString: "$mealDate",
+              format: "%d/%m/%Y"
+            }
+          }
+        }
+      },
+      {
+        $sort: { mealDateObj: -1 } // 1 for ascending order, -1 for descending
+      }
+    ]);
 
     if (userDates.length > 0) {
       res.status(200).json(userDates);
@@ -192,10 +201,11 @@ const getUserAllDates = async (req, res) => {
       res.status(404).json(null);
     }
   } catch (error) {
-    console.error("Error fetching user meal:", error);
+    console.error("Error fetching user meal: ", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
 
 const getUserDataByDate = async (req, res) => {
   try {
@@ -210,9 +220,26 @@ const getUserDataByDate = async (req, res) => {
       res.status(404).json(null);
     }
   } catch (error) {
-    console.error("Error fetching user meal:", error);
+    console.error("Error fetching user meal: ", error);
     res.status(500).json({ message: "Internal server error" });
   }
+};
+
+const getAllUserData = async (req, res) => {
+    try {
+        const { userId } = req.query;
+        const userMeal = await userMealSchema.find({
+        userId,
+        });
+        if (userMeal) {
+        res.status(200).json(userMeal);
+        } else {
+        res.status(404).json(null);
+        }
+    } catch (error) {
+        console.error("Error fetching user meal: ", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
 };
 
 const updateByIdAndFoodType = async (req, res) => {
@@ -236,7 +263,7 @@ const updateByIdAndFoodType = async (req, res) => {
     } else {
       res
         .status(404)
-        .json({ message: "No user meal found for the given criteria." });
+        .json({ message: "No user meal found for the given criteria" });
     }
   } catch (error) {
     console.error("Error updating user meal: ", error);
@@ -244,7 +271,7 @@ const updateByIdAndFoodType = async (req, res) => {
   }
 };
 
-//for adding blood glucose after meal
+// For adding blood glucose after meal
 const addBloodGlucose = async (req, res) => {
   try {
     const { _id, bloodGlucoseLevel } = req.body;
@@ -260,10 +287,10 @@ const addBloodGlucose = async (req, res) => {
     } else {
       res
         .status(404)
-        .json({ message: "No user meal found for the given criteria." });
+        .json({ message: "No user meal found for the given criteria" });
     }
   } catch (error) {
-    console.error("Error updating user meal:", error);
+    console.error("Error updating user meal: ", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -287,7 +314,7 @@ const bloodGlucoseBefore = async (req, res) => {
         .json({ message: "No user meal found for the given criteria." });
     }
   } catch (error) {
-    console.error("Error updating user meal:", error);
+    console.error("Error updating user meal: ", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -323,13 +350,32 @@ const addBloodGlucoseBeforeMeal = async (req, res) => {
 
 const getBloodGlucoseBeforeMeal = async (req, res) => {
   try {
-    const { userId, mealType } = req.query;
-    const currentDate = new Date().toLocaleDateString("en-GB");
+    const { userId, mealType, mealDate } = req.query;
 
     const userBloodGlucose = await userBloodGlucoseSchema.findOne({
       userId,
       mealType,
-      mealDate: { $eq: currentDate }
+      mealDate: { $eq: mealDate }
+    });
+
+    if (userBloodGlucose) {
+      res.status(200).json(userBloodGlucose);
+    } else {
+      res.status(404).json({ message: "No blood glucose data found for the given criteria." });
+    }
+  } catch (error) {
+    console.error("Error fetching blood glucose data:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+const getAllBloodGlucoseBeforeMeal = async (req, res) => {
+  try {
+    const { userId, mealDate } = req.query;
+
+    const userBloodGlucose = await userBloodGlucoseSchema.find({
+      userId,
+      mealDate: { $eq: mealDate }
     });
 
     if (userBloodGlucose) {
@@ -357,15 +403,58 @@ const getCarbDetailsHomeScreen = async (req, res) => {
       res.status(404).json(null);
     }
   } catch (error) {
-    console.error("Error fetching user meal:", error);
+    console.error("Error fetching user meal: ", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+const editMeal = async (req, res) => {
+  try {
+    const { mealType } = req.query;
+    const {
+      userId,
+      mealItems,
+      totalCarbs,
+      insulinDose,
+      userCRR,
+      userICR,
+    } = req.body;
+    const currentDate = new Date().toLocaleDateString("en-GB");
+
+    const updatedUserMeal = await userMealSchema.findOneAndUpdate(
+      {
+        userId,
+        mealType,
+        mealDate: { $eq: currentDate },
+      },
+      {
+        mealItems,
+        totalCarbs,
+        insulinDose,
+        userCRR,
+        userICR,
+      },
+        {new: true}
+    );
+
+    if (updatedUserMeal) {
+      res.status(200).json(updatedUserMeal);
+    } else {
+      res
+        .status(404)
+        .json({ message: "No user meal found for the given criteria." });
+    }
+  } catch (error) {
+    console.error("Error updating user meal: ", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
 
 module.exports = {
   storeUserData,
   getDataByFoodType_Uid_Date,
   getUserDataByDate,
+  getAllUserData,
   getUserAllDates,
   updateByIdAndFoodType,
   getCarbDetailsHomeScreen,
@@ -374,4 +463,6 @@ module.exports = {
   bloodGlucoseBefore,
   addBloodGlucoseBeforeMeal,
   getBloodGlucoseBeforeMeal,
+  getAllBloodGlucoseBeforeMeal,
+  editMeal,
 };

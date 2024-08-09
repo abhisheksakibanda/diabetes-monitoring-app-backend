@@ -7,7 +7,7 @@ const userBloodGlucoseSchema = new mongoose.Schema({
   },
   mealDate: {
     type: String,
-    default: Date.now(),
+    default: new Date().toLocaleDateString("en-GB"),
   },
   mealType: {
     type: String,
@@ -20,6 +20,6 @@ const userBloodGlucoseSchema = new mongoose.Schema({
   },
 });
 
-userBloodGlucose = mongoose.model("userBloodGlucoseSchema", userBloodGlucoseSchema);
+userBloodGlucose = mongoose.model("userBloodGlucose", userBloodGlucoseSchema);
 
-module.exports = userBloodGlucoseSchema;
+module.exports = userBloodGlucose;

@@ -4,6 +4,8 @@ const cors = require("cors");
 
 const express = require("express");
 const mongoose = require("mongoose");
+const swaggerUi = require('swagger-ui-express');
+const specs = require('./config/swaggerConfig');
 
 const http = require("http");
 
@@ -12,6 +14,7 @@ const app = express();
 
 app.use(express.json());
 app.use(cors());
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
 const hostname = process.env.HOSTNAME;
 const port = process.env.PORT;
@@ -27,7 +30,7 @@ const uri = process.env.URI;
 
 const userCarbsData = require("./routes/userCarbsRoute");
 app.get("/", (req, res) => {
-  res.send("Hello");
+  res.send("Status: OK");
 });
 app.use("/api", userCarbsData);
 
